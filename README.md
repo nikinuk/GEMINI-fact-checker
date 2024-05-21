@@ -17,10 +17,17 @@ A ferramenta é configurada atravéz de um JSON de configuração que deve ser p
 O serviço está rodando em um "Cloud Run" do Google Cloud e é solicitado pelo link: https://fact-check-inspiria-32mkcjubia-rj.a.run.app
 Temos dois end-points, um para o POST ("/") e outro para obter o status dos agentes ("/progress/task")
 O arquivo de configuração deve seguir a seguinte formatação:
+
 { 
+
 'input': str, #fato ou url
+
 'num_dominios': int, 
+
 'max': int,
+
 'time_window': str, # timeUnit (d/w/m/y) + int, ex, duas semanas = w2
+
 'dominios': [str], lista de domínios no formato "www.dominio.com"
+
 }
