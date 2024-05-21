@@ -6,9 +6,9 @@ from flask_cors import CORS
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import shared_memory
 
-GOOGLE_API_KEY = "AIzaSyBzbl55y2JDsxPRpmgTcAsbcGkwyydRXY0"
-CLOUD_KEY = "AIzaSyAVofiTa9nyTjxTufNtBnOKZpWqytzpWpA"
-CX = "d3d2555aa63924e2a"
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+CLOUD_KEY = os.environ.get("CLOUD_KEY")
+CX = os.environ.get("CX")
 
 URL = "https://www.googleapis.com/customsearch/v1"
 
