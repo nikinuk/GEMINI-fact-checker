@@ -31,3 +31,5 @@ O arquivo de configuração deve seguir a seguinte formatação:
 'dominios': [str], lista de domínios no formato "www.dominio.com"
 
 }
+
+O html inspiria-fact-checker.html mostra um exemplo de uso.
