@@ -1,0 +1,289 @@
+<code>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERIFICAÇÃO DE FATOS INSPIRIA-Google</title>
+    <style>
+      body {
+        font-family: 'Arial';
+        font-size: 14px;
+      }
+      h1 {
+        font-weight: bold;
+      }
+    </style>
+</head>
+<body>
+    <!-- Crie os botões de alternância para as abas -->
+    <button onclick="openTab('tab1')">VERIFICADOR DE FATOS USANDO GOOLGLE SEARCH -></button>
+    <button onclick="openTab('tab2')">CONFIGURAÇÕES</button>
+
+    <!-- Defina o conteúdo das abas -->
+    <div id="tab1" class="tab"><br>
+        <h2>Verificador de Fatos - Inspiria</h2><br>
+        <p>Bem vindo ao verificador de fatos da Inspiria. Ele funciona usando a busca do google-search para encontrar notícias relacionadas ao fato mencionado ou a uma url de referência e usando o Google-Gemini para avaliar as notícias e comparar seu conteúdo.</p>
+        <p>Use com as configurações padrão ou defina seus próprios parâmetros na aba de CONFIGURAÇÔES.</p>
+        <label for="inputText" style="color: black;">Digite o fato a verificar ou a URL da notícia: </label><br><br>
+        <input type="text" id="inputText" placeholder="Insira seu texto ou URL" size="108"><br><br>
+        <button id="callService">VERIFICAR FATOS</button><br><br>
+        <textarea id="statusInfo" placeholder="NÃO INICIADO" rows="2" cols="100" readonly style="background-color: white"></textarea>
+        <br><br>
+        <label for="outputText" style="color: black;">Verificação dos fatos:</label><br>
+        <div id="outputText" class="editableDiv" contenteditable="true" placeholder="Resposta aparecerá aqui"></div><br>
+        <label for="outputSource" style="color: black;">Fontes verificadas:</label><br>
+        <div id="outputSource" class="editableDiv" contenteditable="true" placeholder="Resposta aparecerá aqui"></div>
+    </div>
+
+    <div id="tab2" class="tab">
+        <h1>Configurações</h2><br>
+        <h2>Definir janela de busca</h2>
+        <p>Selecione a janela de busca. A janela de busca define quanto tempo para trás a busca por notícias vai levar em consideração para a verificação dos fatos. Dica: paa fatos recentes, usar janela curta, mas que inclua a data provável do fato.</p>
+        <form>
+        <label><input type="radio" name="timeUnit" value="d" checked onclick="updateTimeUnit('d')"> dias</label><br>
+        <label><input type="radio" name="timeUnit" value="w" onclick="updateTimeUnit('w')"> semanas</label><br>
+        <label><input type="radio" name="timeUnit" value="m" onclick="updateTimeUnit('m')"> meses</label><br>
+        <label><input type="radio" name="timeUnit" value="y" onclick="updateTimeUnit('y')"> anos</label><br>
+        </form>
+        <button onclick="decrementTime()">-</button>
+        <input type="text" id="variable" value="w2" readonly>
+        <button onclick="incrementTime()">+</button>
+
+        <h2>Numero máximo de URLs para a pesquisa</h2>
+        <p>Define número de resultados de busca a serem loevados em conta para a verificação dos fatos. Dica: muitos resultados resultam em demora na avaliação e na possibilidade de se incluir resultados irrelevantes para os fatos.</p>
+        <div>
+            <h3>Numero máximo de URLs a buscar: <span id="numDemoinios"></span></h3>
+            <button onclick="decrement('numDemoinios')">-</button>
+            <button onclick="increment('numDemoinios')">+</button>
+        </div>
+         
+        <h2>Repetição de domínios</h2>
+        <p>Comparar fatos com notícias de um mesmo domínio pode gerar resultados tendenciosos. Este parâmetro limita a acitação de URLs de um mesmo domínio.</p>
+        <div>
+            <h3>MaxRepetition: <span id="maxRepetition"></span></h3>
+            <button onclick="decrement('maxRepetition')">-</button>
+            <button onclick="increment('maxRepetition')">+</button>
+        </div>
+        <br>
+
+        <h2>Domínios para busca</h2>
+        <p>Aqui sugerimos uma lista de sites de notícias oficiais e/ou confiáveis para a busca de informações. Acrescente mais domínios caso deseje incluir outras fontes, ou limpe a lista completamente caso deseje buscar em toda a internet.</p>
+        <input type="text" id="inputDominio" placeholder="Digite um domínio">
+        <button onclick="adicionarDominio()">Adicionar Domínio</button>
+        <button onclick="limparDominios()">Limpar Lista</button>
+        
+        <table id="tabelaDominios"></table>
+
+    </div>
+
+    <script>
+
+        let animationInterval; // Reference to animation interval
+        let count = 2; // Contagem máxima Default para URLs
+        let timeUnit = 'w'; //Unidade temporal default 
+        let numDemoinios = 5;
+        let maxRepetition = 3;
+        var dominios = [
+            "exame.com",
+            "www.cnnbrasil.com.br",
+            "www.cartacapital.com.br",
+            "www.poder360.com.br",
+            "www.bbc.com",
+            "g1.globo.com",
+            "www.poder360.com.br",
+            "www.in.gov.br",
+            "www12.senado.leg.br",
+            "www.camara.leg.br",
+            "www.gov.br",
+            "www.cnj.jus.br", 
+            "agenciabrasil.ebc.com.br",
+            "noticias.uol.com.br",
+            "checamos.afp.com",
+            "lupa.uol.com.br",
+            "www.boatos.org",
+            "projetocomprova.com.br",
+            "www.e-farsas.com"
+        ];
+        // -----------------------------------------------------------------------------
+        // Função para alternar entre as abas
+        function openTab(tabName) {
+            const tabs = document.getElementsByClassName('tab');
+            for (const tab of tabs) {
+                tab.style.display = 'none';
+            }
+            document.getElementById(tabName).style.display = 'block';
+        }
+		
+        //-------------------------------------------------------------------------------------
+        function cleanForm() { //Limpa formulario de entrada
+            document.getElementById('outputText').innerHTML = "...";
+            document.getElementById('outputSource').innerHTML = "...";
+        }
+
+        function startAnimation() {
+            //const statusInfo = document.getElementById('statusInfo');
+            animationInterval = setInterval(() => {
+                pollProgress();
+                }, 2000); // Change text every 1 seconds
+            statusInterval = setInterval(() => {
+                document.getElementById('outputText').innerHTML += ".";
+                document.getElementById('outputSource').innerHTML += ".";
+                }, 500);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            clearInterval(statusInterval);
+            animationInterval = null; // Clear reference
+            statusInterval = null;
+        }
+        // CHAMADAS HTML --------------------------------------------------------------
+        function pollProgress() {
+            fetch("http://127.0.0.1:5000/progress/task")
+            .then(response => {
+                if (response.ok) {
+                return response.json();
+                } else {
+                throw new Error('Algo deu errado na chamada do status!');
+                stopAnimation();
+                }
+            })
+            .then(data => {
+                document.getElementById('statusInfo').value = data['progress'];
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                document.getElementById('statusInfo').value = "deu ruin" + error.message;
+                stopAnimation();
+            });
+        }
+
+        // Tabela de dominios ------------------------------------------------------------------------
+        function adicionarDominio() {
+            var dominio = document.getElementById('inputDominio').value;
+            dominios.push(dominio);
+            document.getElementById('inputDominio').value = '';
+            atualizarTabela();
+        }
+
+        function removerDominio(index) {
+            dominios.splice(index, 1);
+            atualizarTabela();
+        }
+
+        function limparDominios() {
+            dominios = [];
+            atualizarTabela();
+        }
+
+        function atualizarTabela() {
+            var tabela = document.getElementById('tabelaDominios');
+            tabela.innerHTML = '<tr><th>Domínio</th><th>Remover</th></tr>';
+            dominios.forEach(function(dominio, index) {
+                var linha = tabela.insertRow();
+                var celulaDominio = linha.insertCell(0);
+                celulaDominio.textContent = dominio;
+                var celulaRemover = linha.insertCell(1);
+                var botaoRemover = document.createElement('button');
+                botaoRemover.textContent = 'Remover';
+                botaoRemover.onclick = function() { removerDominio(index); };
+                celulaRemover.appendChild(botaoRemover);
+            });
+        }
+
+        // Variaveis de dominios -----------------------------------------------------------
+        function increment(variable) {
+            if (variable === 'numDemoinios') {
+                numDemoinios++;
+            } else if (variable === 'maxRepetition') {
+                maxRepetition++;
+            }
+            updateDisplay();
+            }
+
+        function decrement(variable) {
+            if (variable === 'numDemoinios' && numDemoinios > 0) {
+                numDemoinios--;
+            } else if (variable === 'maxRepetition' && maxRepetition > 0) {
+                maxRepetition--;
+            }
+            updateDisplay();
+            }
+
+        function updateDisplay() {
+            document.getElementById('numDemoinios').textContent = numDemoinios;
+            document.getElementById('maxRepetition').textContent = maxRepetition;
+            }
+
+        // Time window------------------------------------------------------------------------
+        function updateTimeUnit(unit) {
+            timeUnit = unit;
+            updateDisplayTime();
+            }
+
+        function incrementTime() {
+            count++;
+            updateDisplayTime();
+            }
+
+        function decrementTime() {
+            if (count > 0) {
+                count--;
+                updateDisplayTime();
+            }
+        }
+        function updateDisplayTime() {
+            document.getElementById('variable').value = timeUnit + count;
+        }
+
+        // Chamada ao apertar o botão ---------------------------------------------------------
+        document.getElementById('callService').addEventListener('click', function() {
+            const input = document.getElementById('inputText').value;
+
+            cleanForm();
+            startAnimation(); // Start animation before fetch
+
+            fetch("http://127.0.0.1:5000", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ 
+                    'input': input, 
+                    'num_dominios': numDemoinios, 
+                    'max': maxRepetition,
+                    'time_window': timeUnit + count,
+                    'dominios': dominios
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                return response.json();
+                } else {
+                throw new Error('Algo deu errado na chamada do serviço!');
+                }
+            })
+            .then(data => {
+                        document.getElementById('outputText').innerHTML = data['response'];
+                        document.getElementById('outputSource').innerHTML = data['source'];
+                        document.getElementById('statusInfo').value = "AVALIAÇÃO FINALIZADA";
+                        stopAnimation(); // Stop animation after receiving response
+                            })
+            .catch(error => {
+                console.error('Erro:', error);
+                document.getElementById('outputText').innerHTML =  error.message;
+                stopAnimation(); // Stop animation on error
+            });
+        });
+
+        updateDisplay();
+        openTab("tab1");
+        window.onload = function() {
+            atualizarTabela();
+            };
+    </script>
+</body>
+</html>
+
+</code>
